@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Realizar Pedido</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f2f2f2;
+      padding: 20px;
+    }
+    .box {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      max-width: 500px;
+      margin: auto;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    input, textarea {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+    button {
+      margin-top: 15px;
+      width: 100%;
+      padding: 10px;
+      background: #28a745;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #1e7e34;
+    }
+    .resultados {
+      border: 1px solid #ccc;
+      max-height: 150px;
+      overflow-y: auto;
+      margin-top: 5px;
+      border-radius: 5px;
+      background: #fff;
+    }
+    .resultado-item {
+      padding: 5px 10px;
+      cursor: pointer;
+    }
+    .resultado-item:hover {
+      background: #f0f0f0;
+    }
+    .producto-seleccionado {
+      margin-top: 10px;
+      font-size: 0.9em;
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="box">
+    <h2>Realizar Pedido</h2>
+
+    <p id="cliente-info"></p>
+
+    <!-- BUSCADOR -->
+    <label>Buscar producto</label>
+    <input type="text" id="buscador" placeholder="Código o descripción...">
+    <div id="resultados" class="resultados"></div>
+
+    <div id="producto-seleccionado" class="producto-seleccionado"></div>
+
+    <label>Cantidad</label>
+    <input type="number" id="cantidad" min="1" value="1">
+
+    <button onclick="agregarProducto()">Añadir al pedido</button>
+
+    <!-- TABLA DEL CARRITO -->
+    <h3>Productos añadidos</h3>
+    <table id="tabla-carrito" border="1" width="100%" style="margin-top:10px; background:white;">
+      <thead>
+        <tr>
+          <th>Código</th>
+          <th>Descripción</th>
+          <th>Cantidad</th>
+          <th>Eliminar</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <label>Observaciones</label>
+    <textarea id="obs" rows="3"></textarea>
+
+    <button onclick="enviarPedido()">Enviar Pedido</button>
+  </div>
+
+  <script>
+    // Mostrar datos del cliente
+    const cliente = JSON.parse(localStorage.getItem('cliente'));
+    if (cliente) {
+      document.getElementById('cliente-info').textContent =
+        `Cliente: ${cliente.nombre} (${cliente.codigo})`;
+    } else {
+      document.getElementById('cliente-info').textContent =
+        'Cliente no identificado';
+    }
+
+    let productoSeleccionado = null;
+    let carrito = [];
+
+    // --- BUSCADOR ---
+    const buscador = document.getElementById('buscador');
+    const resultadosDiv = document.getElementById('resultados');
+    const productoSelDiv = document.getElementById('producto-seleccionado');
+
+    buscador.addEventListener('input', async () => {
+      const q = buscador.value.trim();
+      resultadosDiv.innerHTML = '';
+      if (q.length < 2) return;
+
+      const resp = await fetch(`http://localhost:3000/productos?q=${encodeURIComponent(q)}`);
+      const productos = await resp.json();
+
+      productos.forEach(p => {
+        const div = document.createElement('div');
+        div.className = 'resultado-item';
+        div.textContent = `${p.codigo} - ${p.descripcion}`;
+        div.onclick = () => {
+          productoSeleccionado = p;
+          productoSelDiv.textContent =
+            `Seleccionado: ${p.codigo} - ${p.descripcion}`;
+          resultadosDiv.innerHTML = '';
+          buscador.value = '';
+        };
+        resultadosDiv.appendChild(div);
+      });
+    });
+
+    // --- AÑADIR PRODUCTO AL CARRITO ---
+    function agregarProducto() {
+      if (!productoSeleccionado) {
+        alert("Selecciona un producto");
+        return;
+      }
+
+      const cantidad = parseInt(document.getElementById('cantidad').value);
+
+      carrito.push({
+        codigo: productoSeleccionado.codigo,
+        descripcion: productoSeleccionado.descripcion,
+        cantidad: cantidad
+      });
+
+      actualizarTablaCarrito();
+
+      productoSeleccionado = null;
+      productoSelDiv.textContent = "";
+      document.getElementById('cantidad').value = 1;
+    }
+
+    // --- ACTUALIZAR TABLA ---
+    function actualizarTablaCarrito() {
+      const tbody = document.querySelector("#tabla-carrito tbody");
+      tbody.innerHTML = "";
+
+      carrito.forEach((item, index) => {
+        const tr = document.createElement("tr");
+
+        tr.innerHTML = `
+          <td>${item.codigo}</td>
+          <td>${item.descripcion}</td>
+          <td>${item.cantidad}</td>
+          <td><button onclick="eliminarProducto(${index})">X</button></td>
+        `;
+
+        tbody.appendChild(tr);
+      });
+    }
+
+    // --- ELIMINAR PRODUCTO ---
+    function eliminarProducto(index) {
+      carrito.splice(index, 1);
+      actualizarTablaCarrito();
+    }
+
+    // --- ENVIAR PEDIDO ---
+    async function enviarPedido() {
+
+      const confirmar = confirm("¿Está seguro de enviar este pedido?");
+      if (!confirmar) return;
+
+      if (carrito.length === 0) {
+        alert("Añade al menos un producto");
+        return;
+      }
+
+      const pedido = {
+        codigo: cliente.codigo,
+        productos: carrito,
+        obs: document.getElementById('obs').value
+      };
+
+      const respuesta = await fetch('http://localhost:3000/pedido', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(pedido)
+      });
+
+      const data = await respuesta.json();
+
+      if (data.success) {
+          alert(`Pedido enviado correctamente.\nNúmero de pedido: ${data.id}`);
+
+        carrito = [];
+        actualizarTablaCarrito();
+      } else {
+        alert('Error al enviar el pedido');
+      }
+    }
+  </script>
+
+</body>
+</html>

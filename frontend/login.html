@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Login Clientes</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f2f2f2;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .login-box {
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      width: 300px;
+      text-align: center;
+    }
+    input {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+    button {
+      margin-top: 15px;
+      width: 100%;
+      padding: 10px;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    .error {
+      color: red;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="login-box">
+    <h2>Acceso Clientes</h2>
+    <input type="text" id="codigo" placeholder="Introduce tu código">
+    <button onclick="login()">Entrar</button>
+    <p id="mensaje" class="error"></p>
+  </div>
+
+  <script>
+    async function login() {
+      const codigo = document.getElementById('codigo').value;
+
+      const respuesta = await fetch('http://localhost:3000/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ codigo })
+      });
+
+      const data = await respuesta.json();
+
+      if (data.success) {
+        // Guardamos los datos del cliente para usarlos después
+        localStorage.setItem('cliente', JSON.stringify(data.cliente));
+        window.location.href = 'pedido.html'; // Página siguiente
+      } else {
+        document.getElementById('mensaje').textContent = 'Código incorrecto';
+      }
+    }
+  </script>
+
+</body>
+</html>
