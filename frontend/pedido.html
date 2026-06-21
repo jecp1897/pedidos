@@ -122,7 +122,7 @@
       resultadosDiv.innerHTML = '';
       if (q.length < 2) return;
 
-      const resp = await fetch(`http://localhost:3000/productos?q=${encodeURIComponent(q)}`);
+      const resp = await fetch(`/productos?q=${encodeURIComponent(q)}`);
       const productos = await resp.json();
 
       productos.forEach(p => {
@@ -204,7 +204,7 @@
         obs: document.getElementById('obs').value
       };
 
-      const respuesta = await fetch('http://localhost:3000/pedido', {
+      const respuesta = await fetch('/pedido', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(pedido)
