@@ -59,7 +59,7 @@
     async function login() {
       const codigo = document.getElementById('codigo').value;
 
-      const respuesta = await fetch('http://localhost:3000/login', {
+      const respuesta = await fetch('/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ codigo })
