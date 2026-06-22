@@ -213,26 +213,29 @@
       const data = await respuesta.json();
 
       if (data.success) {
-        alert(`Pedido enviado correctamente.\nNúmero de pedido: ${data.id}`);
-      // Descargar PDF automáticamente
-      const pdfResp = await fetch('/pdf', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id: data.id,
-          codigo: cliente.codigo,
-          productos: carrito,
-          obs: document.getElementById('obs').value
-        })
-      });
-      
-      const blob = await pdfResp.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `pedido_${data.id}.pdf`;
-      a.click();
-      URL.revokeObjectURL(url);
+
+        // DESCARGAR PDF AUTOMÁTICAMENTE
+        const pdfResp = await fetch('/pdf', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: data.id,
+            numeroPedido: data.numeroPedido,
+            codigo: cliente.codigo,
+            productos: carrito,
+            obs: document.getElementById('obs').value
+          })
+        });
+
+        const blob = await pdfResp.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${data.numeroPedido}.pdf`;
+        a.click();
+        URL.revokeObjectURL(url);
+
+        alert(`Pedido enviado correctamente.\nNúmero de pedido: ${data.numeroPedido}`);
 
         carrito = [];
         actualizarTablaCarrito();
