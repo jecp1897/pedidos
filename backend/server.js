@@ -26,7 +26,8 @@ app.use(express.json());
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
   port: process.env.SMTP_PORT,
-  secure: true,
+  secure: false,       // Gmail en Render NO usa secure: true
+  requireTLS: true,    // Obligamos TLS
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS
