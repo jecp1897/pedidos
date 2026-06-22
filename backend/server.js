@@ -4,6 +4,7 @@ const path = require('path');
 const xlsx = require('xlsx');
 const db = require('./database');
 const nodemailer = require('nodemailer');
+const PDFDocument = require('pdfkit');
 
 const app = express();
 const PORT = 3000;
@@ -25,8 +26,8 @@ app.use(express.json());
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
-    user: process.env.EMAIL_USER,   // ✔ CORRECTO
-    pass: process.env.EMAIL_PASS    // ✔ CORRECTO
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS
   }
 });
 
@@ -38,7 +39,7 @@ app.get('/', (req, res) => {
 });
 
 // -------------------------
-// LISTAR PRODUCTOS (BUSCADOR)
+// LISTAR PRODUCTOS
 // -------------------------
 app.get('/productos', (req, res) => {
   const q = req.query.q || '';
@@ -151,7 +152,7 @@ app.post('/login', (req, res) => {
 });
 
 // -------------------------
-// GUARDAR PEDIDO (VARIOS PRODUCTOS)
+// GUARDAR PEDIDO
 // -------------------------
 app.post('/pedido', (req, res) => {
   const { codigo, productos, obs } = req.body;
@@ -163,6 +164,9 @@ app.post('/pedido', (req, res) => {
     function (err) {
       if (err) return res.status(500).json({ success: false });
 
+      // Generar número AU-Pxxxxxxx
+      const numeroPedido = `AU-P${String(this.lastID).padStart(7, '0')}`;
+
       // Email
       const lista = productos
         .map(p => `${p.codigo} - ${p.descripcion} x ${p.cantidad}`)
@@ -171,11 +175,11 @@ app.post('/pedido', (req, res) => {
       const mailOptions = {
         from: process.env.EMAIL_USER,
         to: process.env.EMAIL_USER,
-        subject: `Pedido #${this.lastID} de ${codigo}`,
+        subject: `Pedido ${numeroPedido} de ${codigo}`,
         text: `
 Nuevo pedido recibido:
 
-Número de pedido: ${this.lastID}
+Número de pedido: ${numeroPedido}
 Código cliente: ${codigo}
 
 Productos:
@@ -191,27 +195,25 @@ Fecha: ${new Date().toLocaleString()}
         if (err) console.error("Error enviando email:", err);
       });
 
-      res.json({ success: true, id: this.lastID });
+      res.json({ success: true, id: this.lastID, numeroPedido });
     }
   );
 });
-const PDFDocument = require('pdfkit');
 
 // -------------------------
 // GENERAR PDF DEL PEDIDO
 // -------------------------
 app.post('/pdf', (req, res) => {
-  const { id, codigo, productos, obs } = req.body;
+  const { id, numeroPedido, codigo, productos, obs } = req.body;
 
   const doc = new PDFDocument();
 
-  // Cabeceras para descargar
   res.setHeader('Content-Type', 'application/pdf');
-  res.setHeader('Content-Disposition', `attachment; filename=pedido_${id}.pdf`);
+  res.setHeader('Content-Disposition', `attachment; filename=${numeroPedido}.pdf`);
 
   doc.pipe(res);
 
-  doc.fontSize(20).text(`Pedido Nº ${id}`, { underline: true });
+  doc.fontSize(20).text(`Pedido ${numeroPedido}`, { underline: true });
   doc.moveDown();
 
   doc.fontSize(14).text(`Cliente: ${codigo}`);
@@ -236,3 +238,4 @@ app.post('/pdf', (req, res) => {
 app.listen(PORT, () => {
   console.log(`Servidor escuchando en http://localhost:${PORT}`);
 });
+
