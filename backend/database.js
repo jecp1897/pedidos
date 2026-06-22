@@ -9,7 +9,7 @@ db.serialize(() => {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       codigo TEXT UNIQUE,
       nombre TEXT,
-      ciudad TEXT,
+      privincia TEXT,
       activo INTEGER DEFAULT 1,
       usos INTEGER DEFAULT 0
     );
