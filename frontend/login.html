@@ -11,6 +11,7 @@
       justify-content: center;
       align-items: center;
       height: 100vh;
+      margin: 0;
     }
     .login-box {
       background: white;
@@ -26,6 +27,7 @@
       margin-top: 10px;
       border-radius: 5px;
       border: 1px solid #ccc;
+      font-size: 16px;
     }
     button {
       margin-top: 15px;
@@ -36,6 +38,7 @@
       border: none;
       border-radius: 5px;
       cursor: pointer;
+      font-size: 16px;
     }
     button:hover {
       background: #0056b3;
@@ -43,6 +46,7 @@
     .error {
       color: red;
       margin-top: 10px;
+      font-size: 14px;
     }
   </style>
 </head>
@@ -57,22 +61,31 @@
 
   <script>
     async function login() {
-      const codigo = document.getElementById('codigo').value;
+      const codigo = document.getElementById('codigo').value.trim();
 
-      const respuesta = await fetch('/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ codigo })
-      });
+      if (!codigo) {
+        document.getElementById('mensaje').textContent = 'Introduce un código';
+        return;
+      }
 
-      const data = await respuesta.json();
+      try {
+        const respuesta = await fetch('/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ codigo })
+        });
 
-      if (data.success) {
-        // Guardamos los datos del cliente para usarlos después
-        localStorage.setItem('cliente', JSON.stringify(data.cliente));
-        window.location.href = 'pedido.html'; // Página siguiente
-      } else {
-        document.getElementById('mensaje').textContent = 'Código incorrecto';
+        const data = await respuesta.json();
+
+        if (data.success) {
+          localStorage.setItem('cliente', JSON.stringify(data.cliente));
+          window.location.href = 'pedido.html';
+        } else {
+          document.getElementById('mensaje').textContent = 'Código incorrecto';
+        }
+
+      } catch (error) {
+        document.getElementById('mensaje').textContent = 'Error de conexión';
       }
     }
   </script>
