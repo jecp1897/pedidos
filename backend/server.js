@@ -63,7 +63,7 @@ app.get('/productos', (req, res) => {
 // -------------------------
 // IMPORTAR PRODUCTOS DESDE EXCEL
 // -------------------------
-app.post('/importar-productos', (req, res) => {
+app.get('/importar-productos', (req, res) => {
   try {
     const filePath = path.join(__dirname, 'productos.xlsx');
     const workbook = xlsx.readFile(filePath);
@@ -100,7 +100,7 @@ app.post('/importar-productos', (req, res) => {
 // -------------------------
 // IMPORTAR CLIENTES DESDE EXCEL
 // -------------------------
-app.post('/importar-clientes', (req, res) => {
+app.get('/importar-clientes', (req, res) => {
   try {
     const filePath = path.join(__dirname, 'clientes.xlsx');
     const workbook = xlsx.readFile(filePath);
