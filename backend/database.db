@@ -1,9 +1,0 @@
-CREATE TABLE IF NOT EXISTS clientes (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  codigo TEXT UNIQUE,
-  nombre TEXT,
-  privincia TEXT,
-  activo INTEGER DEFAULT 1,
-  usos INTEGER DEFAULT 0
-);
-
