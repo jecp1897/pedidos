@@ -108,7 +108,7 @@ app.get('/importar-clientes', (req, res) => {
     const rows = xlsx.utils.sheet_to_json(sheet);
 
     const stmt = db.prepare(`
-      INSERT INTO clientes (codigo, nombre, provincia, activo)
+      INSERT INTO clientes (codigo, nombre, privincia, activo)
       VALUES (?, ?, ?, ?)
       ON CONFLICT(codigo) DO UPDATE SET
         nombre = excluded.nombre,
