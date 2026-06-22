@@ -108,11 +108,11 @@ app.get('/importar-clientes', (req, res) => {
     const rows = xlsx.utils.sheet_to_json(sheet);
 
     const stmt = db.prepare(`
-      INSERT INTO clientes (codigo, nombre, ciudad, activo)
+      INSERT INTO clientes (codigo, nombre, provincia, activo)
       VALUES (?, ?, ?, ?)
       ON CONFLICT(codigo) DO UPDATE SET
         nombre = excluded.nombre,
-        ciudad = excluded.ciudad,
+        provincia = excluded.provincia,
         activo = excluded.activo
     `);
 
@@ -120,7 +120,7 @@ app.get('/importar-clientes', (req, res) => {
       stmt.run(
         row.codigo,
         row.nombre,
-        row.ciudad || '',
+        row.provincia || '',
         row.activo ?? 1
       );
     });
