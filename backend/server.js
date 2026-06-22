@@ -36,7 +36,7 @@ const transporter = nodemailer.createTransport({
 // RUTA DE PRUEBA
 // -------------------------
 app.get('/', (req, res) => {
-  res.send('Servidor de pedidos de aceite funcionando 🛢️');
+  res.redirect('/login.html');
 });
 
 // -------------------------
