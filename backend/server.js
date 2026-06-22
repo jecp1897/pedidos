@@ -195,6 +195,40 @@ Fecha: ${new Date().toLocaleString()}
     }
   );
 });
+const PDFDocument = require('pdfkit');
+
+// -------------------------
+// GENERAR PDF DEL PEDIDO
+// -------------------------
+app.post('/pdf', (req, res) => {
+  const { id, codigo, productos, obs } = req.body;
+
+  const doc = new PDFDocument();
+
+  // Cabeceras para descargar
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Content-Disposition', `attachment; filename=pedido_${id}.pdf`);
+
+  doc.pipe(res);
+
+  doc.fontSize(20).text(`Pedido Nº ${id}`, { underline: true });
+  doc.moveDown();
+
+  doc.fontSize(14).text(`Cliente: ${codigo}`);
+  doc.moveDown();
+
+  doc.fontSize(14).text("Productos:");
+  productos.forEach(p => {
+    doc.text(`- ${p.codigo} ${p.descripcion} x ${p.cantidad}`);
+  });
+
+  doc.moveDown();
+  doc.text(`Observaciones: ${obs || "Ninguna"}`);
+  doc.moveDown();
+  doc.text(`Fecha: ${new Date().toLocaleString()}`);
+
+  doc.end();
+});
 
 // -------------------------
 // ARRANCAR SERVIDOR
