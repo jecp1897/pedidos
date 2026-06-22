@@ -112,7 +112,7 @@ app.get('/importar-clientes', (req, res) => {
       VALUES (?, ?, ?, ?)
       ON CONFLICT(codigo) DO UPDATE SET
         nombre = excluded.nombre,
-        provincia = excluded.provincia,
+        privincia = excluded.privincia,
         activo = excluded.activo
     `);
 
@@ -120,7 +120,7 @@ app.get('/importar-clientes', (req, res) => {
       stmt.run(
         row.codigo,
         row.nombre,
-        row.provincia || '',
+        row.privincia || '',
         row.activo ?? 1
       );
     });
