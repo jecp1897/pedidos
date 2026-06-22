@@ -25,8 +25,8 @@ app.use(express.json());
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
-    user: process.env.EMAIL_PASS,
-    pass: process.env.EMAIL_USER
+    user: process.env.EMAIL_USER,   // ✔ CORRECTO
+    pass: process.env.EMAIL_PASS    // ✔ CORRECTO
   }
 });
 
@@ -169,8 +169,8 @@ app.post('/pedido', (req, res) => {
         .join('\n');
 
       const mailOptions = {
-        from: 'edward1897@gmail.com',
-        to: 'edward1897@gmail.com',
+        from: process.env.EMAIL_USER,
+        to: process.env.EMAIL_USER,
         subject: `Pedido #${this.lastID} de ${codigo}`,
         text: `
 Nuevo pedido recibido:
@@ -187,7 +187,9 @@ Fecha: ${new Date().toLocaleString()}
         `
       };
 
-      transporter.sendMail(mailOptions, () => {});
+      transporter.sendMail(mailOptions, (err) => {
+        if (err) console.error("Error enviando email:", err);
+      });
 
       res.json({ success: true, id: this.lastID });
     }
