@@ -27,13 +27,12 @@ db.serialize(() => {
     );
   `);
 
-  // Tabla de pedidos (cabecera)
+  // Tabla de pedidos (compatible con server.js)
   db.run(`
     CREATE TABLE IF NOT EXISTS pedidos (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      codigoCliente TEXT,
-      codigoPedido TEXT,
-      productos TEXT,   -- JSON con array de productos
+      codigo TEXT,          -- código del cliente
+      productos TEXT,       -- JSON con array de productos
       obs TEXT,
       fecha TEXT
     );
