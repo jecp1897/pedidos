@@ -232,6 +232,25 @@ app.post('/pdf', (req, res) => {
 
   doc.end();
 });
+// -------------------------
+// PROBAR ENVÍO DE EMAIL
+// -------------------------
+app.get('/test-email', async (req, res) => {
+  try {
+    await transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to: process.env.EMAIL_USER,
+      subject: "Prueba de envío desde AuPedidos",
+      text: "Este es un email de prueba para verificar la configuración SMTP."
+    });
+
+    res.json({ success: true, message: "Email enviado correctamente" });
+
+  } catch (err) {
+    console.error("Error enviando email:", err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
 
 // -------------------------
 // ARRANCAR SERVIDOR
