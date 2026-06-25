@@ -171,8 +171,9 @@ app.post('/pedido', (req, res) => {
 
       // Email
       const lista = productos
-        .map(p => `${p.codigo} - ${p.descripcion} x ${p.cantidad}`)
+        .map(p => `${p.codigo} - ${p.descripcion} x ${p.cantidad} ${p.tipo === "cajas" ? "cajas" : "unidades sueltas"}`)
         .join('\n');
+
 
       const mailOptions = {
         from: process.env.EMAIL_USER,
@@ -223,8 +224,10 @@ app.post('/pdf', (req, res) => {
 
   doc.fontSize(14).text("Productos:");
   productos.forEach(p => {
-    doc.text(`- ${p.codigo} ${p.descripcion} x ${p.cantidad}`);
+    const tipoTexto = p.tipo === "cajas" ? "cajas" : "unidades sueltas";
+    doc.text(`- ${p.codigo} ${p.descripcion} x ${p.cantidad} ${tipoTexto}`);
   });
+
 
   doc.moveDown();
   doc.text(`Observaciones: ${obs || "Ninguna"}`);
