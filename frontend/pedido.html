@@ -127,7 +127,6 @@
       padding: 6px 10px;
       border-radius: 6px;
       cursor: pointer;
-      margin: 0 4px;
       font-size: 14px;
     }
 
@@ -162,6 +161,8 @@
     <div id="resultados" class="resultados"></div>
 
     <div id="producto-seleccionado" style="margin-top:10px; font-size:0.9em;"></div>
+
+    <!-- YA NO HAY BARRA DE CANTIDAD -->
 
     <button class="btn-main" onclick="agregarProducto()">Añadir al pedido</button>
 
@@ -229,20 +230,17 @@
         return;
       }
 
-      const cantidad = parseInt(document.getElementById('cantidad').value);
-
       carrito.push({
         codigo: productoSeleccionado.codigo,
         descripcion: productoSeleccionado.descripcion,
-        cantidad: cantidad,
-        tipo: "unidades sueltas"
+        cantidad: 1,               // SIEMPRE empieza en 1
+        tipo: "cajas"              // POR DEFECTO cajas
       });
 
       actualizarTablaCarrito();
 
       productoSeleccionado = null;
       productoSelDiv.textContent = "";
-      document.getElementById('cantidad').value = 1;
     }
 
     function actualizarTablaCarrito() {
@@ -255,15 +253,17 @@
         tr.innerHTML = `
           <td>${item.codigo}</td>
           <td>${item.descripcion}</td>
-          <td>
-            <button class="btn-small" onclick="cambiarCantidad(${index}, -1)">-</button>
-            <span style="margin:0 8px;">${item.cantidad}</span>
-            <button class="btn-small" onclick="cambiarCantidad(${index}, 1)">+</button>
+          <td style="text-align:center;">
+            <div style="display:flex; justify-content:center; align-items:center; gap:20px;">
+              <button class="btn-small" onclick="cambiarCantidad(${index}, -1)">-</button>
+              <span style="font-size:16px; min-width:20px; text-align:center;">${item.cantidad}</span>
+              <button class="btn-small" onclick="cambiarCantidad(${index}, 1)">+</button>
+            </div>
           </td>
           <td>
             <select onchange="cambiarTipo(${index}, this.value)">
-              <option value="unidades sueltas" ${item.tipo === "unidades sueltas" ? "selected" : ""}>Unidades sueltas</option>
               <option value="cajas" ${item.tipo === "cajas" ? "selected" : ""}>Cajas</option>
+              <option value="unidades sueltas" ${item.tipo === "unidades sueltas" ? "selected" : ""}>Unidades sueltas</option>
             </select>
           </td>
           <td><button class="btn-delete" onclick="eliminarProducto(${index})">X</button></td>
@@ -343,4 +343,3 @@
 
 </body>
 </html>
-
