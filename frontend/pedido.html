@@ -3,72 +3,149 @@
 <head>
   <meta charset="UTF-8">
   <title>Realizar Pedido</title>
+
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f2f2f2;
-      padding: 20px;
+    :root {
+      --azul: #2c3e50;
+      --dorado: #c9a44c;
+      --gris-fondo: #f7f7f7;
+      --gris-borde: #e0e0e0;
+      --texto: #333;
     }
+
+    body {
+      font-family: "Segoe UI", Arial, sans-serif;
+      background: var(--gris-fondo);
+      margin: 0;
+      padding: 30px;
+      color: var(--texto);
+    }
+
     .box {
       background: white;
-      padding: 20px;
-      border-radius: 10px;
-      max-width: 600px;
+      padding: 30px;
+      border-radius: 12px;
+      max-width: 650px;
       margin: auto;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      border-left: 6px solid var(--dorado);
     }
+
+    h2 {
+      color: var(--azul);
+      margin-top: 0;
+      font-size: 26px;
+      text-align: center;
+    }
+
+    label {
+      font-weight: bold;
+      margin-top: 15px;
+      display: block;
+      color: var(--azul);
+    }
+
     input, textarea, select {
       width: 100%;
-      padding: 10px;
-      margin-top: 10px;
-      border-radius: 5px;
-      border: 1px solid #ccc;
+      padding: 12px;
+      margin-top: 8px;
+      border-radius: 8px;
+      border: 1px solid var(--gris-borde);
+      font-size: 15px;
+      background: #fff;
     }
-    button {
+
+    input:focus, textarea:focus, select:focus {
+      outline: none;
+      border-color: var(--dorado);
+      box-shadow: 0 0 4px rgba(201,164,76,0.4);
+    }
+
+    .btn-main {
+      width: 100%;
+      margin-top: 20px;
+      padding: 14px;
+      background: var(--azul);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .btn-main:hover {
+      background: #1b2836;
+    }
+
+    .resultados {
+      border: 1px solid var(--gris-borde);
+      max-height: 180px;
+      overflow-y: auto;
+      margin-top: 5px;
+      border-radius: 8px;
+      background: #fff;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    }
+
+    .resultado-item {
+      padding: 10px 12px;
+      cursor: pointer;
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    .resultado-item:hover {
+      background: #fafafa;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+      background: white;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+
+    th {
+      background: var(--azul);
+      color: white;
+      padding: 12px;
+      font-weight: normal;
+    }
+
+    td {
+      padding: 12px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    .btn-small {
+      background: var(--dorado);
+      color: white;
+      border: none;
       padding: 6px 10px;
-      border-radius: 5px;
+      border-radius: 6px;
+      cursor: pointer;
+      margin: 0 4px;
+      font-size: 14px;
+    }
+
+    .btn-small:hover {
+      background: #b18c3f;
+    }
+
+    .btn-delete {
+      background: #d9534f;
+      color: white;
+      padding: 6px 10px;
+      border-radius: 6px;
       border: none;
       cursor: pointer;
     }
-    .btn-main {
-      width: 100%;
-      margin-top: 15px;
-      background: #28a745;
-      color: white;
-      padding: 10px;
-    }
-    .btn-main:hover {
-      background: #1e7e34;
-    }
-    .btn-small {
-      background: #007bff;
-      color: white;
-      margin: 0 3px;
-    }
-    .btn-small:hover {
-      background: #0056b3;
-    }
-    .btn-delete {
-      background: #dc3545;
-      color: white;
-    }
+
     .btn-delete:hover {
-      background: #a71d2a;
-    }
-    .resultados {
-      border: 1px solid #ccc;
-      max-height: 150px;
-      overflow-y: auto;
-      margin-top: 5px;
-      border-radius: 5px;
-      background: #fff;
-    }
-    .resultado-item {
-      padding: 5px 10px;
-      cursor: pointer;
-    }
-    .resultado-item:hover {
-      background: #f0f0f0;
+      background: #b52b27;
     }
   </style>
 </head>
@@ -92,8 +169,8 @@
     <button class="btn-main" onclick="agregarProducto()">Añadir al pedido</button>
 
     <!-- TABLA DEL CARRITO -->
-    <h3>Productos añadidos</h3>
-    <table id="tabla-carrito" border="1" width="100%" style="margin-top:10px; background:white;">
+    <h3 style="color:var(--azul); margin-top:30px;">Productos añadidos</h3>
+    <table id="tabla-carrito">
       <thead>
         <tr>
           <th>Código</th>
@@ -113,7 +190,6 @@
   </div>
 
   <script>
-    // Mostrar datos del cliente
     const cliente = JSON.parse(localStorage.getItem('cliente'));
     if (cliente) {
       document.getElementById('cliente-info').textContent =
@@ -123,7 +199,6 @@
     let productoSeleccionado = null;
     let carrito = [];
 
-    // --- BUSCADOR ---
     const buscador = document.getElementById('buscador');
     const resultadosDiv = document.getElementById('resultados');
     const productoSelDiv = document.getElementById('producto-seleccionado');
@@ -151,7 +226,6 @@
       });
     });
 
-    // --- AÑADIR PRODUCTO ---
     function agregarProducto() {
       if (!productoSeleccionado) {
         alert("Selecciona un producto");
@@ -164,7 +238,7 @@
         codigo: productoSeleccionado.codigo,
         descripcion: productoSeleccionado.descripcion,
         cantidad: cantidad,
-        tipo: "unidades" // valor por defecto
+        tipo: "unidades sueltas"
       });
 
       actualizarTablaCarrito();
@@ -174,7 +248,6 @@
       document.getElementById('cantidad').value = 1;
     }
 
-    // --- ACTUALIZAR TABLA ---
     function actualizarTablaCarrito() {
       const tbody = document.querySelector("#tabla-carrito tbody");
       tbody.innerHTML = "";
@@ -192,7 +265,7 @@
           </td>
           <td>
             <select onchange="cambiarTipo(${index}, this.value)">
-              <option value="unidades" ${item.tipo === "unidades" ? "selected" : ""}>Unidades</option>
+              <option value="unidades sueltas" ${item.tipo === "unidades sueltas" ? "selected" : ""}>Unidades sueltas</option>
               <option value="cajas" ${item.tipo === "cajas" ? "selected" : ""}>Cajas</option>
             </select>
           </td>
@@ -203,30 +276,23 @@
       });
     }
 
-    // --- CAMBIAR CANTIDAD ---
     function cambiarCantidad(index, delta) {
       carrito[index].cantidad += delta;
       if (carrito[index].cantidad < 1) carrito[index].cantidad = 1;
       actualizarTablaCarrito();
     }
 
-    // --- CAMBIAR TIPO ---
     function cambiarTipo(index, tipo) {
       carrito[index].tipo = tipo;
     }
 
-    // --- ELIMINAR ---
     function eliminarProducto(index) {
       carrito.splice(index, 1);
       actualizarTablaCarrito();
     }
 
-    // --- ENVIAR PEDIDO ---
     async function enviarPedido() {
-
-      const confirmar = confirm("¿Está seguro de enviar este pedido?");
-      if (!confirmar) return;
-
+      if (!confirm("¿Está seguro de enviar este pedido?")) return;
       if (carrito.length === 0) {
         alert("Añade al menos un producto");
         return;
@@ -248,7 +314,6 @@
 
       if (data.success) {
 
-        // DESCARGAR PDF
         const pdfResp = await fetch('/pdf', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
