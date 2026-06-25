@@ -13,11 +13,11 @@
       background: white;
       padding: 20px;
       border-radius: 10px;
-      max-width: 500px;
+      max-width: 600px;
       margin: auto;
       box-shadow: 0 0 10px rgba(0,0,0,0.1);
     }
-    input, textarea {
+    input, textarea, select {
       width: 100%;
       padding: 10px;
       margin-top: 10px;
@@ -25,17 +25,35 @@
       border: 1px solid #ccc;
     }
     button {
-      margin-top: 15px;
-      width: 100%;
-      padding: 10px;
-      background: #28a745;
-      color: white;
-      border: none;
+      padding: 6px 10px;
       border-radius: 5px;
+      border: none;
       cursor: pointer;
     }
-    button:hover {
+    .btn-main {
+      width: 100%;
+      margin-top: 15px;
+      background: #28a745;
+      color: white;
+      padding: 10px;
+    }
+    .btn-main:hover {
       background: #1e7e34;
+    }
+    .btn-small {
+      background: #007bff;
+      color: white;
+      margin: 0 3px;
+    }
+    .btn-small:hover {
+      background: #0056b3;
+    }
+    .btn-delete {
+      background: #dc3545;
+      color: white;
+    }
+    .btn-delete:hover {
+      background: #a71d2a;
     }
     .resultados {
       border: 1px solid #ccc;
@@ -52,11 +70,6 @@
     .resultado-item:hover {
       background: #f0f0f0;
     }
-    .producto-seleccionado {
-      margin-top: 10px;
-      font-size: 0.9em;
-      color: #333;
-    }
   </style>
 </head>
 <body>
@@ -71,12 +84,12 @@
     <input type="text" id="buscador" placeholder="Código o descripción...">
     <div id="resultados" class="resultados"></div>
 
-    <div id="producto-seleccionado" class="producto-seleccionado"></div>
+    <div id="producto-seleccionado" style="margin-top:10px; font-size:0.9em;"></div>
 
     <label>Cantidad</label>
     <input type="number" id="cantidad" min="1" value="1">
 
-    <button onclick="agregarProducto()">Añadir al pedido</button>
+    <button class="btn-main" onclick="agregarProducto()">Añadir al pedido</button>
 
     <!-- TABLA DEL CARRITO -->
     <h3>Productos añadidos</h3>
@@ -86,6 +99,7 @@
           <th>Código</th>
           <th>Descripción</th>
           <th>Cantidad</th>
+          <th>Tipo</th>
           <th>Eliminar</th>
         </tr>
       </thead>
@@ -95,7 +109,7 @@
     <label>Observaciones</label>
     <textarea id="obs" rows="3"></textarea>
 
-    <button onclick="enviarPedido()">Enviar Pedido</button>
+    <button class="btn-main" onclick="enviarPedido()">Enviar Pedido</button>
   </div>
 
   <script>
@@ -104,9 +118,6 @@
     if (cliente) {
       document.getElementById('cliente-info').textContent =
         `Cliente: ${cliente.nombre} (${cliente.codigo})`;
-    } else {
-      document.getElementById('cliente-info').textContent =
-        'Cliente no identificado';
     }
 
     let productoSeleccionado = null;
@@ -140,7 +151,7 @@
       });
     });
 
-    // --- AÑADIR PRODUCTO AL CARRITO ---
+    // --- AÑADIR PRODUCTO ---
     function agregarProducto() {
       if (!productoSeleccionado) {
         alert("Selecciona un producto");
@@ -152,7 +163,8 @@
       carrito.push({
         codigo: productoSeleccionado.codigo,
         descripcion: productoSeleccionado.descripcion,
-        cantidad: cantidad
+        cantidad: cantidad,
+        tipo: "unidades" // valor por defecto
       });
 
       actualizarTablaCarrito();
@@ -173,15 +185,37 @@
         tr.innerHTML = `
           <td>${item.codigo}</td>
           <td>${item.descripcion}</td>
-          <td>${item.cantidad}</td>
-          <td><button onclick="eliminarProducto(${index})">X</button></td>
+          <td>
+            <button class="btn-small" onclick="cambiarCantidad(${index}, -1)">-</button>
+            <span style="margin:0 8px;">${item.cantidad}</span>
+            <button class="btn-small" onclick="cambiarCantidad(${index}, 1)">+</button>
+          </td>
+          <td>
+            <select onchange="cambiarTipo(${index}, this.value)">
+              <option value="unidades" ${item.tipo === "unidades" ? "selected" : ""}>Unidades</option>
+              <option value="cajas" ${item.tipo === "cajas" ? "selected" : ""}>Cajas</option>
+            </select>
+          </td>
+          <td><button class="btn-delete" onclick="eliminarProducto(${index})">X</button></td>
         `;
 
         tbody.appendChild(tr);
       });
     }
 
-    // --- ELIMINAR PRODUCTO ---
+    // --- CAMBIAR CANTIDAD ---
+    function cambiarCantidad(index, delta) {
+      carrito[index].cantidad += delta;
+      if (carrito[index].cantidad < 1) carrito[index].cantidad = 1;
+      actualizarTablaCarrito();
+    }
+
+    // --- CAMBIAR TIPO ---
+    function cambiarTipo(index, tipo) {
+      carrito[index].tipo = tipo;
+    }
+
+    // --- ELIMINAR ---
     function eliminarProducto(index) {
       carrito.splice(index, 1);
       actualizarTablaCarrito();
@@ -214,7 +248,7 @@
 
       if (data.success) {
 
-        // DESCARGAR PDF AUTOMÁTICAMENTE
+        // DESCARGAR PDF
         const pdfResp = await fetch('/pdf', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
