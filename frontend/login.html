@@ -2,51 +2,81 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Login Clientes</title>
+  <title>Acceso Clientes</title>
+
   <style>
+    :root {
+      --azul: #2c3e50;
+      --dorado: #c9a44c;
+      --gris-fondo: #f7f7f7;
+      --gris-borde: #e0e0e0;
+      --texto: #333;
+    }
+
     body {
-      font-family: Arial, sans-serif;
-      background: #f2f2f2;
+      font-family: "Segoe UI", Arial, sans-serif;
+      background: var(--gris-fondo);
+      margin: 0;
+      padding: 0;
       display: flex;
       justify-content: center;
       align-items: center;
       height: 100vh;
-      margin: 0;
     }
+
     .login-box {
       background: white;
-      padding: 30px;
-      border-radius: 10px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-      width: 300px;
+      padding: 40px;
+      border-radius: 14px;
+      width: 350px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.1);
+      border-top: 6px solid var(--dorado);
       text-align: center;
     }
+
+    h2 {
+      color: var(--azul);
+      margin-bottom: 25px;
+      font-size: 24px;
+    }
+
     input {
       width: 100%;
-      padding: 10px;
+      padding: 12px;
       margin-top: 10px;
-      border-radius: 5px;
-      border: 1px solid #ccc;
-      font-size: 16px;
+      border-radius: 8px;
+      border: 1px solid var(--gris-borde);
+      font-size: 15px;
     }
-    button {
-      margin-top: 15px;
+
+    input:focus {
+      outline: none;
+      border-color: var(--dorado);
+      box-shadow: 0 0 4px rgba(201,164,76,0.4);
+    }
+
+    .btn-login {
       width: 100%;
-      padding: 10px;
-      background: #007bff;
+      margin-top: 20px;
+      padding: 12px;
+      background: var(--azul);
       color: white;
       border: none;
-      border-radius: 5px;
-      cursor: pointer;
+      border-radius: 8px;
       font-size: 16px;
+      cursor: pointer;
+      transition: 0.2s;
     }
-    button:hover {
-      background: #0056b3;
+
+    .btn-login:hover {
+      background: #1b2836;
     }
-    .error {
-      color: red;
-      margin-top: 10px;
+
+    .mensaje-error {
+      margin-top: 15px;
+      color: #b52b27;
       font-size: 14px;
+      display: none;
     }
   </style>
 </head>
@@ -54,38 +84,39 @@
 
   <div class="login-box">
     <h2>Acceso Clientes</h2>
-    <input type="text" id="codigo" placeholder="Introduce tu código">
-    <button onclick="login()">Entrar</button>
-    <p id="mensaje" class="error"></p>
+
+    <input type="number" id="codigo" placeholder="Código de cliente">
+
+    <button class="btn-login" onclick="login()">Entrar</button>
+
+    <p id="error" class="mensaje-error">Código incorrecto</p>
   </div>
 
   <script>
     async function login() {
-      const codigo = document.getElementById('codigo').value.trim();
+      const codigo = document.getElementById("codigo").value.trim();
+      const errorMsg = document.getElementById("error");
 
       if (!codigo) {
-        document.getElementById('mensaje').textContent = 'Introduce un código';
+        errorMsg.textContent = "Introduce tu código";
+        errorMsg.style.display = "block";
         return;
       }
 
-      try {
-        const respuesta = await fetch('/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ codigo })
-        });
+      const resp = await fetch("/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ codigo })
+      });
 
-        const data = await respuesta.json();
+      const data = await resp.json();
 
-        if (data.success) {
-          localStorage.setItem('cliente', JSON.stringify(data.cliente));
-          window.location.href = 'pedido.html';
-        } else {
-          document.getElementById('mensaje').textContent = 'Código incorrecto';
-        }
-
-      } catch (error) {
-        document.getElementById('mensaje').textContent = 'Error de conexión';
+      if (data.success) {
+        localStorage.setItem("cliente", JSON.stringify(data.cliente));
+        window.location.href = "/pedido.html";
+      } else {
+        errorMsg.textContent = "Código incorrecto";
+        errorMsg.style.display = "block";
       }
     }
   </script>
