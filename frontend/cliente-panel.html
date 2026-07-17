@@ -1,1 +1,143 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Panel del Cliente</title>
+
+  <style>
+    :root {
+      --azul: #2c3e50;
+      --dorado: #c9a44c;
+      --gris-fondo: #f7f7f7;
+      --gris-borde: #e0e0e0;
+      --texto: #333;
+    }
+
+    body {
+      font-family: "Segoe UI", Arial, sans-serif;
+      background: var(--gris-fondo);
+      margin: 0;
+      padding: 30px;
+      color: var(--texto);
+    }
+
+    .box {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      max-width: 700px;
+      margin: auto;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      border-left: 6px solid var(--dorado);
+    }
+
+    h2 {
+      color: var(--azul);
+      margin-top: 0;
+      font-size: 26px;
+      text-align: center;
+    }
+
+    .btn {
+      display: block;
+      width: 100%;
+      padding: 14px;
+      margin-top: 20px;
+      background: var(--azul);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      text-align: center;
+      transition: 0.2s;
+    }
+
+    .btn:hover {
+      background: #1b2836;
+    }
+
+    .pedido-item {
+      background: #fff;
+      padding: 15px;
+      border-radius: 10px;
+      border: 1px solid var(--gris-borde);
+      margin-top: 15px;
+    }
+
+    .pedido-item:hover {
+      background: #fafafa;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="box">
+    <h2>Panel del Cliente</h2>
+
+    <div id="datos-cliente"></div>
+
+    <h3 style="color:var(--azul); margin-top:30px;">Tus pedidos</h3>
+    <div id="lista-pedidos"></div>
+
+    <button class="btn" onclick="nuevoPedido()">Hacer un nuevo pedido</button>
+  </div>
+
+  <script>
+    const cliente = JSON.parse(localStorage.getItem("cliente"));
+
+    if (!cliente) {
+      window.location.href = "/login.html";
+    }
+
+    // Mostrar datos del cliente
+    document.getElementById("datos-cliente").innerHTML = `
+      <p><strong>Código:</strong> ${cliente.codigo}</p>
+      <p><strong>Nombre:</strong> ${cliente.nombre}</p>
+      <p><strong>Provincia:</strong> ${cliente.privincia}</p>
+    `;
+
+    // Cargar pedidos del cliente
+    async function cargarPedidos() {
+      const resp = await fetch(`/pedidos-cliente?codigo=${cliente.codigo}`);
+      const pedidos = await resp.json();
+
+      const contenedor = document.getElementById("lista-pedidos");
+      contenedor.innerHTML = "";
+
+      pedidos.forEach(p => {
+        const div = document.createElement("div");
+        div.className = "pedido-item";
+        div.innerHTML = `
+          <p><strong>Pedido:</strong> ${p.numero}</p>
+          <p><strong>Fecha:</strong> ${p.fecha}</p>
+          <button class="btn" onclick="repetirPedido('${p.id}')">Repetir pedido</button>
+          <button class="btn" onclick="modificarPedido('${p.id}')">Modificar pedido</button>
+        `;
+        contenedor.appendChild(div);
+      });
+    }
+
+    cargarPedidos();
+
+    function nuevoPedido() {
+      localStorage.setItem("modoPedido", "nuevo");
+      window.location.href = "/pedido-cliente.html";
+    }
+
+    function repetirPedido(id) {
+      localStorage.setItem("modoPedido", "repetir");
+      localStorage.setItem("pedidoId", id);
+      window.location.href = "/pedido-cliente.html";
+    }
+
+    function modificarPedido(id) {
+      localStorage.setItem("modoPedido", "modificar");
+      localStorage.setItem("pedidoId", id);
+      window.location.href = "/pedido-cliente.html";
+    }
+  </script>
+
+</body>
+</html>
 
