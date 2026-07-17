@@ -284,7 +284,10 @@ app.post('/pedido-cliente', (req, res) => {
       function (err) {
         if (err) return res.status(500).json({ success: false });
 
-        res.json({ success: true, id: this.lastID });
+        // GENERAR NÚMERO DE PEDIDO IGUAL QUE EL COMERCIAL
+        const numeroPedido = `AU-P${String(this.lastID).padStart(7, '0')}`;
+
+        res.json({ success: true, id: this.lastID, numeroPedido });
       }
     );
 
@@ -302,7 +305,9 @@ app.post('/pedido-cliente', (req, res) => {
       function (err) {
         if (err) return res.status(500).json({ success: false });
 
-        res.json({ success: true, id: pedidoId });
+        const numeroPedido = `AU-P${String(pedidoId).padStart(7, '0')}`;
+
+        res.json({ success: true, id: pedidoId, numeroPedido });
       }
     );
 
@@ -325,14 +330,12 @@ app.post('/pdf', (req, res) => {
 
   doc.pipe(res);
 
-  // LOGO (ajusta la ruta si lo pones en otro sitio)
   try {
     doc.image(path.join(__dirname, 'logo.png'), 40, 40, { width: 120 });
   } catch (e) {
     console.log("Logo no encontrado, continuando sin logo.");
   }
 
-  // CABECERA
   doc.fontSize(22).text(`Pedido ${numeroPedido}`, 200, 40);
   doc.moveDown(2);
 
@@ -341,7 +344,6 @@ app.post('/pdf', (req, res) => {
   doc.fontSize(12).text(`Fecha: ${fecha}`);
   doc.moveDown();
 
-  // DATOS DEL CLIENTE
   doc.fontSize(14).text("Datos del cliente", { underline: true });
   doc.moveDown(0.5);
 
@@ -355,7 +357,6 @@ app.post('/pdf', (req, res) => {
       doc.text(`Provincia: ${cliente.privincia}`);
       doc.moveDown(2);
 
-      // TABLA DE PRODUCTOS
       doc.fontSize(14).text("Productos", { underline: true });
       doc.moveDown(1);
 
