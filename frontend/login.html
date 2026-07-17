@@ -113,7 +113,7 @@
 
       if (data.success) {
         localStorage.setItem("cliente", JSON.stringify(data.cliente));
-        window.location.href = "/pedido.html";
+        window.location.href = "/cliente-panel.html";   // ← CAMBIO IMPORTANTE
       } else {
         errorMsg.textContent = "Código incorrecto";
         errorMsg.style.display = "block";
