@@ -228,31 +228,102 @@ Fecha: ${new Date().toLocaleString()}
 app.post('/pdf', (req, res) => {
   const { id, numeroPedido, codigo, productos, obs } = req.body;
 
-  const doc = new PDFDocument();
+  const doc = new PDFDocument({ margin: 40 });
 
   res.setHeader('Content-Type', 'application/pdf');
   res.setHeader('Content-Disposition', `attachment; filename=${numeroPedido}.pdf`);
 
   doc.pipe(res);
 
-  doc.fontSize(20).text(`Pedido ${numeroPedido}`, { underline: true });
+  // LOGO (ajusta la ruta si lo pones en otro sitio)
+  try {
+    doc.image(path.join(__dirname, 'logo.png'), 40, 40, { width: 120 });
+  } catch (e) {
+    console.log("Logo no encontrado, continuando sin logo.");
+  }
+
+  // CABECERA
+  doc.fontSize(22).text(`Pedido ${numeroPedido}`, 200, 40);
+  doc.moveDown(2);
+
+  const fecha = new Date().toLocaleString();
+
+  doc.fontSize(12).text(`Fecha: ${fecha}`);
   doc.moveDown();
 
-  doc.fontSize(14).text(`Cliente: ${codigo}`);
-  doc.moveDown();
+  // DATOS DEL CLIENTE
+  doc.fontSize(14).text("Datos del cliente", { underline: true });
+  doc.moveDown(0.5);
 
-  doc.fontSize(14).text("Productos:");
-  productos.forEach(p => {
-    const tipoTexto = p.tipo === "cajas" ? "cajas" : "unidades sueltas";
-    doc.text(`- ${p.codigo} ${p.descripcion} x ${p.cantidad} ${tipoTexto}`);
-  });
+  // Recuperar datos completos del cliente desde la BD
+  db.get(
+    `SELECT * FROM clientes WHERE codigo = ?`,
+    [codigo],
+    (err, cliente) => {
 
-  doc.moveDown();
-  doc.text(`Observaciones: ${obs || "Ninguna"}`);
-  doc.moveDown();
-  doc.text(`Fecha: ${new Date().toLocaleString()}`);
+      doc.fontSize(12).text(`Código: ${cliente.codigo}`);
+      doc.text(`Nombre: ${cliente.nombre}`);
+      doc.text(`Provincia: ${cliente.privincia}`);
+      doc.moveDown(2);
 
-  doc.end();
+      // TABLA DE PRODUCTOS
+      doc.fontSize(14).text("Productos", { underline: true });
+      doc.moveDown(1);
+
+      // Encabezados de tabla
+      const tableTop = doc.y;
+      const col1 = 40;
+      const col2 = 140;
+      const col3 = 360;
+      const col4 = 430;
+
+      doc.fontSize(12).text("Código", col1, tableTop);
+      doc.text("Descripción", col2, tableTop);
+      doc.text("Cantidad", col3, tableTop);
+      doc.text("Tipo", col4, tableTop);
+
+      doc.moveDown(0.5);
+
+      // Línea debajo del encabezado
+      doc.moveTo(40, doc.y).lineTo(550, doc.y).stroke();
+
+      doc.moveDown(0.5);
+
+      // Filas
+      productos.forEach(p => {
+        const tipoTexto = p.tipo === "cajas" ? "Cajas" : "Unidades sueltas";
+
+        doc.text(p.codigo, col1, doc.y);
+        doc.text(p.descripcion, col2, doc.y);
+        doc.text(String(p.cantidad), col3, doc.y);
+        doc.text(tipoTexto, col4, doc.y);
+
+        doc.moveDown(0.5);
+      });
+
+      doc.moveDown(2);
+
+      // OBSERVACIONES
+      doc.fontSize(14).text("Observaciones", { underline: true });
+      doc.moveDown(0.5);
+
+      doc.fontSize(12)
+        .rect(40, doc.y, 500, 60)
+        .stroke()
+        .text(obs || "Ninguna", 50, doc.y + 10, { width: 480 });
+
+      doc.moveDown(4);
+
+      // PIE DE PÁGINA
+      doc.fontSize(10)
+        .fillColor("#555")
+        .text("Aceites Únicos · Documento generado automáticamente", 40, 760, {
+          align: "center"
+        });
+
+      doc.end();
+    }
+  );
 });
 
 // -------------------------
