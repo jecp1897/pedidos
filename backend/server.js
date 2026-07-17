@@ -176,7 +176,7 @@ app.post('/login', (req, res) => {
 });
 
 // -------------------------
-// GUARDAR PEDIDO
+// GUARDAR PEDIDO (PORTAL COMERCIAL)
 // -------------------------
 app.post('/pedido', (req, res) => {
   const { codigo, productos, obs } = req.body;
@@ -223,6 +223,96 @@ Fecha: ${new Date().toLocaleString()}
 });
 
 // -------------------------
+// LISTAR PEDIDOS DE UN CLIENTE (PORTAL CLIENTE)
+// -------------------------
+app.get('/pedidos-cliente', (req, res) => {
+  const codigo = req.query.codigo;
+
+  db.all(
+    `SELECT id, codigo, productos, obs, fecha
+     FROM pedidos
+     WHERE codigo = ?
+     ORDER BY fecha DESC`,
+    [codigo],
+    (err, rows) => {
+      if (err) return res.status(500).json({ error: 'Error consultando pedidos' });
+
+      const pedidos = rows.map(p => ({
+        id: p.id,
+        numero: `AU-P${String(p.id).padStart(7, '0')}`,
+        fecha: p.fecha
+      }));
+
+      res.json(pedidos);
+    }
+  );
+});
+
+// -------------------------
+// DETALLE DE UN PEDIDO (PORTAL CLIENTE)
+// -------------------------
+app.get('/pedido-detalle', (req, res) => {
+  const id = req.query.id;
+
+  db.get(
+    `SELECT id, codigo, productos, obs, fecha
+     FROM pedidos
+     WHERE id = ?`,
+    [id],
+    (err, row) => {
+      if (err) return res.status(500).json({ error: 'Error consultando pedido' });
+      if (!row) return res.json({ error: 'Pedido no encontrado' });
+
+      res.json(row);
+    }
+  );
+});
+
+// -------------------------
+// GUARDAR PEDIDO DEL CLIENTE (NUEVO / REPETIR / MODIFICAR)
+// -------------------------
+app.post('/pedido-cliente', (req, res) => {
+  const { codigo, productos, obs, modo, pedidoId } = req.body;
+
+  // NUEVO o REPETIR → crear nuevo pedido
+  if (modo === "nuevo" || modo === "repetir") {
+
+    db.run(
+      `INSERT INTO pedidos (codigo, productos, obs, fecha)
+       VALUES (?, ?, ?, datetime('now'))`,
+      [codigo, JSON.stringify(productos), obs],
+      function (err) {
+        if (err) return res.status(500).json({ success: false });
+
+        res.json({ success: true, id: this.lastID });
+      }
+    );
+
+    return;
+  }
+
+  // MODIFICAR → actualizar pedido existente
+  if (modo === "modificar") {
+
+    db.run(
+      `UPDATE pedidos
+       SET productos = ?, obs = ?
+       WHERE id = ?`,
+      [JSON.stringify(productos), obs, pedidoId],
+      function (err) {
+        if (err) return res.status(500).json({ success: false });
+
+        res.json({ success: true, id: pedidoId });
+      }
+    );
+
+    return;
+  }
+
+  res.json({ success: false, error: "Modo no válido" });
+});
+
+// -------------------------
 // GENERAR PDF DEL PEDIDO
 // -------------------------
 app.post('/pdf', (req, res) => {
@@ -255,7 +345,6 @@ app.post('/pdf', (req, res) => {
   doc.fontSize(14).text("Datos del cliente", { underline: true });
   doc.moveDown(0.5);
 
-  // Recuperar datos completos del cliente desde la BD
   db.get(
     `SELECT * FROM clientes WHERE codigo = ?`,
     [codigo],
@@ -270,7 +359,6 @@ app.post('/pdf', (req, res) => {
       doc.fontSize(14).text("Productos", { underline: true });
       doc.moveDown(1);
 
-      // Encabezados de tabla
       const tableTop = doc.y;
       const col1 = 40;
       const col2 = 140;
@@ -284,12 +372,10 @@ app.post('/pdf', (req, res) => {
 
       doc.moveDown(0.5);
 
-      // Línea debajo del encabezado
       doc.moveTo(40, doc.y).lineTo(550, doc.y).stroke();
 
       doc.moveDown(0.5);
 
-      // Filas
       productos.forEach(p => {
         const tipoTexto = p.tipo === "cajas" ? "Cajas" : "Unidades sueltas";
 
@@ -303,7 +389,6 @@ app.post('/pdf', (req, res) => {
 
       doc.moveDown(2);
 
-      // OBSERVACIONES
       doc.fontSize(14).text("Observaciones", { underline: true });
       doc.moveDown(0.5);
 
@@ -314,7 +399,6 @@ app.post('/pdf', (req, res) => {
 
       doc.moveDown(4);
 
-      // PIE DE PÁGINA
       doc.fontSize(10)
         .fillColor("#555")
         .text("Aceites Únicos · Documento generado automáticamente", 40, 760, {
