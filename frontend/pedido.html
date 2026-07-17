@@ -155,7 +155,23 @@
 
     <p id="cliente-info"></p>
 
-    <!-- BUSCADOR -->
+    <!-- BUSCADOR DE CLIENTES -->
+    <h3 style="color:var(--azul); margin-top:10px;">Seleccionar cliente</h3>
+
+    <label>Buscar cliente</label>
+    <input type="text" id="buscadorCliente" placeholder="Código, nombre o provincia...">
+    <div id="resultadosCliente" class="resultados"></div>
+
+    <div id="clienteSeleccionado" style="
+      margin-top:15px;
+      padding:15px;
+      background:#fff;
+      border-radius:10px;
+      box-shadow:0 2px 6px rgba(0,0,0,0.05);
+      display:none;
+    "></div>
+
+    <!-- BUSCADOR DE PRODUCTOS -->
     <label>Buscar producto</label>
     <input type="text" id="buscador" placeholder="Código o descripción...">
     <div id="resultados" class="resultados"></div>
@@ -223,6 +239,48 @@
         resultadosDiv.appendChild(div);
       });
     });
+
+    // --- BUSCADOR DE CLIENTES ---
+    const buscadorCliente = document.getElementById('buscadorCliente');
+    const resultadosCliente = document.getElementById('resultadosCliente');
+    const clienteSelDiv = document.getElementById('clienteSeleccionado');
+
+    buscadorCliente.addEventListener('input', async () => {
+      const q = buscadorCliente.value.trim();
+      resultadosCliente.innerHTML = '';
+      if (q.length < 2) return;
+
+      const resp = await fetch(`/clientes?q=${encodeURIComponent(q)}`);
+      const clientes = await resp.json();
+
+      clientes.forEach(c => {
+        const div = document.createElement('div');
+        div.className = 'resultado-item';
+        div.textContent = `${c.codigo} - ${c.nombre} (${c.privincia})`;
+        div.onclick = () => seleccionarCliente(c);
+        resultadosCliente.appendChild(div);
+      });
+    });
+
+    function seleccionarCliente(c) {
+      resultadosCliente.innerHTML = '';
+      buscadorCliente.value = '';
+
+      clienteSelDiv.style.display = 'block';
+      clienteSelDiv.innerHTML = `
+        <h4 style="margin:0; color:var(--azul);">Cliente seleccionado</h4>
+        <p><strong>Código:</strong> ${c.codigo}</p>
+        <p><strong>Nombre:</strong> ${c.nombre}</p>
+        <p><strong>Provincia:</strong> ${c.privincia}</p>
+      `;
+
+      // Guardar cliente en localStorage
+      localStorage.setItem('cliente', JSON.stringify(c));
+
+      // Actualizar texto superior
+      document.getElementById('cliente-info').textContent =
+        `Cliente: ${c.nombre} (${c.codigo})`;
+    }
 
     function agregarProducto() {
       if (!productoSeleccionado) {
@@ -296,7 +354,7 @@
       }
 
       const pedido = {
-        codigo: cliente.codigo,
+        codigo: JSON.parse(localStorage.getItem('cliente')).codigo,
         productos: carrito,
         obs: document.getElementById('obs').value
       };
@@ -317,7 +375,7 @@
           body: JSON.stringify({
             id: data.id,
             numeroPedido: data.numeroPedido,
-            codigo: cliente.codigo,
+            codigo: JSON.parse(localStorage.getItem('cliente')).codigo,
             productos: carrito,
             obs: document.getElementById('obs').value
           })
