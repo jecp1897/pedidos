@@ -1,1 +1,322 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Pedido del Cliente</title>
+
+  <style>
+    :root {
+      --azul: #2c3e50;
+      --dorado: #c9a44c;
+      --gris-fondo: #f7f7f7;
+      --gris-borde: #e0e0e0;
+      --texto: #333;
+    }
+
+    body {
+      font-family: "Segoe UI", Arial, sans-serif;
+      background: var(--gris-fondo);
+      margin: 0;
+      padding: 30px;
+      color: var(--texto);
+    }
+
+    .box {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      max-width: 650px;
+      margin: auto;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      border-left: 6px solid var(--dorado);
+    }
+
+    h2 {
+      color: var(--azul);
+      margin-top: 0;
+      font-size: 26px;
+      text-align: center;
+    }
+
+    label {
+      font-weight: bold;
+      margin-top: 15px;
+      display: block;
+      color: var(--azul);
+    }
+
+    input, textarea, select {
+      width: 100%;
+      padding: 12px;
+      margin-top: 8px;
+      border-radius: 8px;
+      border: 1px solid var(--gris-borde);
+      font-size: 15px;
+      background: #fff;
+    }
+
+    .btn-main {
+      width: 100%;
+      margin-top: 20px;
+      padding: 14px;
+      background: var(--azul);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .btn-main:hover {
+      background: #1b2836;
+    }
+
+    .resultados {
+      border: 1px solid var(--gris-borde);
+      max-height: 180px;
+      overflow-y: auto;
+      margin-top: 5px;
+      border-radius: 8px;
+      background: #fff;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    }
+
+    .resultado-item {
+      padding: 10px 12px;
+      cursor: pointer;
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    .resultado-item:hover {
+      background: #fafafa;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+      background: white;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+
+    th {
+      background: var(--azul);
+      color: white;
+      padding: 12px;
+      font-weight: normal;
+    }
+
+    td {
+      padding: 12px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    .btn-small {
+      background: var(--dorado);
+      color: white;
+      border: none;
+      padding: 6px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .btn-delete {
+      background: #d9534f;
+      color: white;
+      padding: 6px 10px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="box">
+    <h2>Pedido del Cliente</h2>
+
+    <p id="cliente-info"></p>
+
+    <!-- BUSCADOR DE PRODUCTOS -->
+    <label>Buscar producto</label>
+    <input type="text" id="buscador" placeholder="Código o descripción...">
+    <div id="resultados" class="resultados"></div>
+
+    <div id="producto-seleccionado" style="margin-top:10px; font-size:0.9em;"></div>
+
+    <button class="btn-main" onclick="agregarProducto()">Añadir al pedido</button>
+
+    <h3 style="color:var(--azul); margin-top:30px;">Productos añadidos</h3>
+    <table id="tabla-carrito">
+      <thead>
+        <tr>
+          <th>Código</th>
+          <th>Descripción</th>
+          <th>Cantidad</th>
+          <th>Tipo</th>
+          <th>Eliminar</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <label>Observaciones</label>
+    <textarea id="obs" rows="3"></textarea>
+
+    <button class="btn-main" onclick="enviarPedido()">Enviar Pedido</button>
+  </div>
+
+  <script>
+    const cliente = JSON.parse(localStorage.getItem("cliente"));
+    const modo = localStorage.getItem("modoPedido");
+    const pedidoId = localStorage.getItem("pedidoId");
+
+    if (!cliente) {
+      window.location.href = "/login.html";
+    }
+
+    document.getElementById("cliente-info").textContent =
+      `Cliente: ${cliente.nombre} (${cliente.codigo})`;
+
+    let carrito = [];
+    let productoSeleccionado = null;
+
+    // Si el cliente está repitiendo o modificando un pedido
+    async function cargarPedidoExistente() {
+      if (!pedidoId) return;
+
+      const resp = await fetch(`/pedido-detalle?id=${pedidoId}`);
+      const data = await resp.json();
+
+      carrito = JSON.parse(data.productos);
+      document.getElementById("obs").value = data.obs || "";
+
+      actualizarTablaCarrito();
+    }
+
+    if (modo === "repetir" || modo === "modificar") {
+      cargarPedidoExistente();
+    }
+
+    // Buscador de productos
+    const buscador = document.getElementById("buscador");
+    const resultadosDiv = document.getElementById("resultados");
+    const productoSelDiv = document.getElementById("producto-seleccionado");
+
+    buscador.addEventListener("input", async () => {
+      const q = buscador.value.trim();
+      resultadosDiv.innerHTML = "";
+      if (q.length < 2) return;
+
+      const resp = await fetch(`/productos?q=${encodeURIComponent(q)}`);
+      const productos = await resp.json();
+
+      productos.forEach(p => {
+        const div = document.createElement("div");
+        div.className = "resultado-item";
+        div.textContent = `${p.codigo} - ${p.descripcion}`;
+        div.onclick = () => {
+          productoSeleccionado = p;
+          productoSelDiv.textContent =
+            `Seleccionado: ${p.codigo} - ${p.descripcion}`;
+          resultadosDiv.innerHTML = "";
+          buscador.value = "";
+        };
+        resultadosDiv.appendChild(div);
+      });
+    });
+
+    function agregarProducto() {
+      if (!productoSeleccionado) {
+        alert("Selecciona un producto");
+        return;
+      }
+
+      carrito.push({
+        codigo: productoSeleccionado.codigo,
+        descripcion: productoSeleccionado.descripcion,
+        cantidad: 1,
+        tipo: "cajas"
+      });
+
+      actualizarTablaCarrito();
+      productoSeleccionado = null;
+      productoSelDiv.textContent = "";
+    }
+
+    function actualizarTablaCarrito() {
+      const tbody = document.querySelector("#tabla-carrito tbody");
+      tbody.innerHTML = "";
+
+      carrito.forEach((item, index) => {
+        const tr = document.createElement("tr");
+
+        tr.innerHTML = `
+          <td>${item.codigo}</td>
+          <td>${item.descripcion}</td>
+          <td>
+            <button class="btn-small" onclick="cambiarCantidad(${index}, -1)">-</button>
+            ${item.cantidad}
+            <button class="btn-small" onclick="cambiarCantidad(${index}, 1)">+</button>
+          </td>
+          <td>
+            <select onchange="cambiarTipo(${index}, this.value)">
+              <option value="cajas" ${item.tipo === "cajas" ? "selected" : ""}>Cajas</option>
+              <option value="unidades sueltas" ${item.tipo === "unidades sueltas" ? "selected" : ""}>Unidades sueltas</option>
+            </select>
+          </td>
+          <td><button class="btn-delete" onclick="eliminarProducto(${index})">X</button></td>
+        `;
+
+        tbody.appendChild(tr);
+      });
+    }
+
+    function cambiarCantidad(index, delta) {
+      carrito[index].cantidad += delta;
+      if (carrito[index].cantidad < 1) carrito[index].cantidad = 1;
+      actualizarTablaCarrito();
+    }
+
+    function cambiarTipo(index, tipo) {
+      carrito[index].tipo = tipo;
+    }
+
+    function eliminarProducto(index) {
+      carrito.splice(index, 1);
+      actualizarTablaCarrito();
+    }
+
+    async function enviarPedido() {
+      const pedido = {
+        codigo: cliente.codigo,
+        productos: carrito,
+        obs: document.getElementById("obs").value,
+        modo,
+        pedidoId
+      };
+
+      const resp = await fetch("/pedido-cliente", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(pedido)
+      });
+
+      const data = await resp.json();
+
+      if (data.success) {
+        alert("Pedido enviado correctamente");
+        window.location.href = "/cliente-panel.html";
+      } else {
+        alert("Error al enviar el pedido");
+      }
+    }
+  </script>
+
+</body>
+</html>
 
